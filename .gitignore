@@ -1,0 +1,8 @@
+# big images go to GitHub Releases, not the repo
+*.img
+*.simg
+*.img.xz
+*.zip
+sn.img
+log_*.txt
+platform-tools/
