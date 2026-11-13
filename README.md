@@ -93,7 +93,7 @@ rollback index.
 
 License of the scripts: MIT.
 
-## Also in this repo
-- [`zuxos-lite/`](zuxos-lite/) — back to stock ZUXOS 1.5 (Android 16), rooted, debloated and tuned, with gaming and PC mode kept
-- [`armada-tools/`](armada-tools/) — `add-to-steam`: add Windows games to Steam on Armada without a file picker
+## Also for this tablet
+- **[ZUXOS Lite](https://github.com/ttabouch12/ZUXOS-Lite-Lenovo-Legion-Y700-Gen3-TB321FU)**: back to stock ZUXOS 1.5 (Android 16), rooted, debloated and tuned, with gaming and PC mode kept
+- [`armada-tools/`](armada-tools/): `add-to-steam`, add Windows games to Steam on Armada without a file picker
 
