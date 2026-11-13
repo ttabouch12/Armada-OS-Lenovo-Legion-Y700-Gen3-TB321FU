@@ -84,7 +84,7 @@ rollback index.
 
 ## Credits and sources
 
-- **Armada OS developers**: the ROM itself (add the link to the release you used here)
+- **Armada OS developers**: the ROM itself https://github.com/armada-os/armada
 - [mlgmxyysd/lenovoubl](https://github.com/mlgmxyysd/lenovoubl): Lenovo bootloader unlock (sn.img) tool
 - postmarketOS wiki, *Unlocking Bootloaders/Lenovo ZUI*: documentation of the ZUI sn.img unlock
 - [DroidWin: How to unlock bootloader on Lenovo Legion Y700](https://droidwinom.pages.dev/posts/how-to-unlock-bootloader-on-lenovo-legion-y700) and
