@@ -1,0 +1,10 @@
+# ZUXOS Lite speed pack
+persist.logd.size=262144
+persist.logd.size.crash=65536
+logd.statistics=0
+dalvik.vm.dex2oat-filter=speed
+pm.dexopt.install=speed-profile
+pm.dexopt.bg-dexopt=speed
+dalvik.vm.systemuicompilerfilter=speed
+debug.sf.disable_backpressure=0
+ro.config.hw_quickpoweron=true

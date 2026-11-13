@@ -2,7 +2,7 @@
 
 A tested, step-by-step Windows guide to unlocking the bootloader of the Lenovo
 Legion Y700 Gen 3 (2025, **TB321FU**, Chinese ZUI firmware) and flashing the
-**Armada** custom ROM. We didn't make Armada; all credit goes to its developers
+**Armada** OS (a Fedora-based Linux distribution for this tablet, not an Android ROM). We didn't make Armada; all credit goes to its developers
 (see *Credits*). What's here is the procedure and helper scripts that worked for us,
 including the problems we hit and how we got past them.
 
@@ -92,3 +92,8 @@ rollback index.
 - [Android platform-tools](https://developer.android.com/tools/releases/platform-tools)
 
 License of the scripts: MIT.
+
+## Also in this repo
+- [`zuxos-lite/`](zuxos-lite/) — back to stock ZUXOS 1.5 (Android 16), rooted, debloated and tuned, with gaming and PC mode kept
+- [`armada-tools/`](armada-tools/) — `add-to-steam`: add Windows games to Steam on Armada without a file picker
+

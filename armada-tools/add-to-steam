@@ -1,0 +1,92 @@
+#!/usr/bin/python3
+"""add-to-steam: add Windows .exe (or Linux) games to Steam on Armada, set Proton ARM64.
+Usage: add-to-steam /path/game.exe [more.exe ...]   (also used by the Dolphin right-click menu)"""
+import glob, os, re, struct, subprocess, sys, time, zlib, shutil
+
+STEAM = os.path.expanduser("~/.local/share/Steam")
+PROTON = "proton_11-arm64"
+LAUNCH = "/usr/libexec/armada/armada-game-launch %command%"
+
+def r_map(b, i):
+    d = {}
+    while True:
+        t = b[i]; i += 1
+        if t == 8: return d, i
+        j = b.index(b'\0', i); k = b[i:j].decode('utf-8', 'replace'); i = j + 1
+        if t == 0: v, i = r_map(b, i)
+        elif t == 1: j = b.index(b'\0', i); v = b[i:j].decode('utf-8', 'replace'); i = j + 1
+        elif t == 2: v = struct.unpack('<i', b[i:i+4])[0]; i += 4
+        else: raise ValueError("vdf type %d" % t)
+        d[k] = v
+
+def w_map(d):
+    o = b''
+    for k, v in d.items():
+        kb = k.encode() + b'\0'
+        if isinstance(v, dict): o += b'\0' + kb + w_map(v)
+        elif isinstance(v, int): o += b'\2' + kb + struct.pack('<i', v)
+        else: o += b'\1' + kb + str(v).encode() + b'\0'
+    return o + b'\x08'
+
+def notify(msg):
+    print(msg)
+    for cmd in (["kdialog", "--passivepopup", msg, "8", "--title", "Add to Steam"], ["notify-send", "Add to Steam", msg]):
+        if shutil.which(cmd[0]):
+            subprocess.Popen(cmd); break
+
+def main(paths):
+    users = [u for u in glob.glob(STEAM + "/userdata/*") if os.path.basename(u).isdigit() and os.path.basename(u) != "0"]
+    if not users: notify("Steam user not found - start Steam and log in once."); return 1
+    games = [os.path.abspath(p) for p in paths if os.path.isfile(p)]
+    if not games: notify("No game file given."); return 1
+    running = subprocess.run(["pgrep", "-f", "steamrtarm64/steam"], capture_output=True).returncode == 0
+    if running:
+        subprocess.run(["steam", "-shutdown"], capture_output=True)
+        for _ in range(40):
+            if subprocess.run(["pgrep", "-f", "steamrtarm64/steam "], capture_output=True).returncode != 0: break
+            time.sleep(0.5)
+        time.sleep(2)
+    added = []
+    for u in users:
+        f = u + "/config/shortcuts.vdf"
+        os.makedirs(os.path.dirname(f), exist_ok=True)
+        data = {"shortcuts": {}}
+        if os.path.exists(f) and os.path.getsize(f) > 2:
+            shutil.copy(f, f + ".bak")
+            b = open(f, 'rb').read(); data, _ = r_map(b, 0)
+            data = data if "shortcuts" in data else {"shortcuts": data}
+        sc = data["shortcuts"]
+        for g in games:
+            name = os.path.splitext(os.path.basename(g))[0]
+            folder = os.path.basename(os.path.dirname(g))
+            if name.lower().split('_')[0] in folder.lower().replace(' ', ''): name = folder
+            exe = '"%s"' % g
+            uid = zlib.crc32((exe + name).encode()) | 0x80000000
+            sid = struct.unpack('<i', struct.pack('<I', uid))[0]
+            for k in list(sc):
+                if sc[k].get("Exe") == exe or sc[k].get("exe") == exe: del sc[k]
+            sc[str(len(sc))] = {"appid": sid, "AppName": name, "Exe": exe, "StartDir": '"%s/"' % os.path.dirname(g),
+                "icon": "", "ShortcutPath": "", "LaunchOptions": LAUNCH, "IsHidden": 0, "AllowDesktopConfig": 1,
+                "AllowOverlay": 1, "OpenVR": 0, "Devkit": 0, "DevkitGameID": "", "DevkitOverrideAppID": 0,
+                "LastPlayTime": 0, "FlatpakAppID": "", "tags": {}}
+            sc2 = {str(i): v for i, v in enumerate(sc.values())}; sc.clear(); sc.update(sc2)
+            if g.lower().endswith((".exe", ".msi", ".bat")): added.append((uid, name))
+            else: added.append((None, name))
+        open(f, 'wb').write(w_map({"shortcuts": sc}))
+    # Proton ARM64 for every .exe
+    cfg = STEAM + "/config/config.vdf"
+    s = open(cfg, encoding='utf-8').read(); shutil.copy(cfg, cfg + ".bak")
+    m = re.search(r'"CompatToolMapping"\s*\{', s)
+    for uid, _ in added:
+        if uid is None: continue
+        entry = '\n\t\t\t\t\t"%d"\n\t\t\t\t\t{\n\t\t\t\t\t\t"name"\t\t"%s"\n\t\t\t\t\t\t"config"\t\t""\n\t\t\t\t\t\t"priority"\t\t"250"\n\t\t\t\t\t}' % (uid, PROTON)
+        s = re.sub(r'\n\s*"%d"\s*\{[^{}]*\}' % uid, '', s)
+        if m: s = s[:m.end()] + entry + s[m.end():]; m = re.search(r'"CompatToolMapping"\s*\{', s)
+    open(cfg, 'w', encoding='utf-8').write(s)
+    if running:
+        subprocess.Popen(["setsid", "steam"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    notify("Added to Steam: " + ", ".join(n for _, n in added) + ("\nSteam is restarting..." if running else ""))
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
